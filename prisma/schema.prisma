@@ -22,6 +22,11 @@ enum PaymentStatus {
   PAID
 }
 
+enum InvoiceFormat {
+  POOJA_XEROX
+  POOJA_ENTERPRISES
+}
+
 enum TaxMode {
   CGST_SGST
   IGST
@@ -94,6 +99,8 @@ model VerificationToken {
 
 model Customer {
   id            String           @id @default(cuid())
+  profileId     String?
+  profile       BusinessProfile? @relation(fields: [profileId], references: [id], onDelete: Restrict)
   companyName   String
   gstin         String?
   state         String
@@ -109,6 +116,7 @@ model Customer {
 
   @@index([companyName])
   @@index([gstin])
+  @@index([profileId])
 }
 
 model CustomerBranch {
@@ -131,7 +139,9 @@ model CustomerBranch {
 
 model Invoice {
   id            String        @id @default(cuid())
-  invoiceNumber String        @unique
+  profileId      String?
+  profile        BusinessProfile? @relation(fields: [profileId], references: [id], onDelete: Restrict)
+  invoiceNumber String
   invoiceDate   DateTime
   customerId     String
   customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
@@ -173,6 +183,8 @@ model Invoice {
   @@index([customerId])
   @@index([sourceTemplateId])
   @@index([paymentStatus])
+  @@index([profileId])
+  @@unique([profileId, invoiceNumber])
 }
 
 model InvoiceItem {
@@ -199,6 +211,8 @@ model InvoiceItem {
 
 model InvoiceTemplate {
   id              String              @id @default(cuid())
+  profileId       String?
+  profile         BusinessProfile?    @relation(fields: [profileId], references: [id], onDelete: Restrict)
   customerId      String
   customer        Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
   name            String
@@ -226,6 +240,7 @@ model InvoiceTemplate {
 
   @@index([customerId])
   @@index([branchId])
+  @@index([profileId])
 }
 
 model InvoiceTemplateItem {
@@ -253,6 +268,8 @@ model InvoiceTemplateItem {
 
 model BusinessSettings {
   id                String   @id @default(cuid())
+  profileId         String?  @unique
+  profile           BusinessProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
   businessName      String
   businessAddress   String
   gstNumber         String
@@ -266,8 +283,27 @@ model BusinessSettings {
   sgstPercent       Decimal  @default(9) @db.Decimal(5, 2)
   footerText        String?
   invoiceHeaderText String   @default("|| SHREE GANESHAY NAMAH ||")
+  bankName          String?
+  bankAccountNo     String?
+  bankBranch        String?
+  bankIfsc          String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+model BusinessProfile {
+  id                 String             @id @default(cuid())
+  code               String             @unique
+  name               String
+  invoiceFormat      InvoiceFormat      @default(POOJA_XEROX)
+  invoiceNumberFloor Int                @default(632)
+  isActive           Boolean            @default(true)
+  settings           BusinessSettings?
+  customers          Customer[]
+  templates          InvoiceTemplate[]
+  invoices           Invoice[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 }
 
 model InvoiceDraft {

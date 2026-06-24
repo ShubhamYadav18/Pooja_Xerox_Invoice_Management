@@ -5,9 +5,13 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { writeAudit } from "@/server/audit";
 import { requireAdmin } from "@/server/authz";
+import { getActiveProfileId } from "@/server/profile";
 
 export async function confirmInvoicePayment(invoiceId: string, formData: FormData) {
   await requireAdmin();
+  const profileId = await getActiveProfileId();
+  const invoice = await prisma.invoice.findFirst({ where: { id: invoiceId, profileId } });
+  if (!invoice) throw new Error("Invoice not found in active profile");
 
   const paidAtValue = String(formData.get("paidAt") ?? "");
   const paymentMode = String(formData.get("paymentMode") ?? "").trim();
@@ -33,6 +37,9 @@ export async function confirmInvoicePayment(invoiceId: string, formData: FormDat
 
 export async function markInvoiceUnpaid(invoiceId: string) {
   await requireAdmin();
+  const profileId = await getActiveProfileId();
+  const invoice = await prisma.invoice.findFirst({ where: { id: invoiceId, profileId } });
+  if (!invoice) throw new Error("Invoice not found in active profile");
 
   await prisma.invoice.update({
     where: { id: invoiceId },

@@ -4,6 +4,9 @@ import { BarChart3, Building2, CreditCard, LayoutDashboard, LogOut, ReceiptText,
 import { auth, signOut } from "@/auth";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ProfileSelect } from "@/components/profile-select";
+import { switchProfile } from "@/server/actions/profile";
+import { getActiveProfile, getActiveSettings, getProfiles } from "@/server/profile";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -17,6 +20,7 @@ const nav = [
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  const [profiles, activeProfile, activeSettings] = await Promise.all([getProfiles(), getActiveProfile(), getActiveSettings()]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,8 +28,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mb-8 px-2">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Invoice Suite</p>
           <div className="mt-1 flex items-center gap-3">
-            <img src="/PoojaXerox_Logo.png" alt="POOJA XEROX" className="h-16 w-auto object-contain" />
-            <h1 className="text-xl font-semibold">POOJA XEROX</h1>
+            <img src={activeSettings?.logoUrl || "/poojaenterpiseslogo.png"} alt={activeProfile.name} className="h-16 w-auto object-contain" />
+            <h1 className="text-xl font-semibold">{activeProfile.name}</h1>
           </div>
         </div>
         <nav className="grid gap-1">
@@ -50,6 +54,15 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <p className="truncate font-medium">{session.user.email}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <form action={switchProfile} className="hidden sm:block">
+              <ProfileSelect
+                key={activeProfile.id}
+                name="profileId"
+                defaultValue={activeProfile.id}
+                profiles={profiles.map((p) => ({ id: p.id, name: p.name }))}
+                className="h-9 rounded-md border bg-card px-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              />
+            </form>
             <form action="/invoices" className="hidden md:block">
               <input
                 name="q"
@@ -72,6 +85,15 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <nav className="no-print flex gap-2 overflow-x-auto border-b bg-card px-4 py-2 lg:hidden">
+          <form action={switchProfile} className="flex shrink-0 gap-2">
+            <ProfileSelect
+              key={activeProfile.id}
+              name="profileId"
+              defaultValue={activeProfile.id}
+              profiles={profiles.map((p) => ({ id: p.id, name: p.name }))}
+              className="h-9 rounded-md border bg-card px-2 text-sm outline-none"
+            />
+          </form>
           {nav.map((item) => (
             <Link
               key={item.href}

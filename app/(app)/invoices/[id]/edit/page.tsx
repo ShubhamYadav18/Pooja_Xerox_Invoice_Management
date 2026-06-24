@@ -1,7 +1,8 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { InvoiceForm } from "@/features/invoices/invoice-form";
 import { updateInvoice } from "@/server/actions/invoices";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfileId } from "@/server/profile";
 
 export default async function EditInvoicePage({
   params,
@@ -12,11 +13,12 @@ export default async function EditInvoicePage({
 }) {
   const { id } = await params;
   const query = await searchParams;
+  const profileId = await getActiveProfileId();
   const [invoice, customers] = await Promise.all([
-    prisma.invoice.findUnique({ where: { id }, include: { items: { orderBy: { srNo: "asc" } } } }),
-    prisma.customer.findMany({ include: { branches: true }, orderBy: { companyName: "asc" } })
+    prisma.invoice.findFirst({ where: { id, profileId }, include: { items: { orderBy: { srNo: "asc" } } } }),
+    prisma.customer.findMany({ where: { profileId }, include: { branches: true }, orderBy: { companyName: "asc" } })
   ]);
-  if (!invoice) notFound();
+  if (!invoice) redirect("/invoices");
 
   return (
     <div className="grid gap-6">

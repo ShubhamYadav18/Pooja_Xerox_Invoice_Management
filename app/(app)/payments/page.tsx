@@ -3,6 +3,7 @@ import { Button, Card, Input, Select } from "@/components/ui";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { confirmInvoicePayment, markInvoiceUnpaid } from "@/server/actions/payments";
+import { getActiveProfileId } from "@/server/profile";
 
 export default async function PaymentsPage({
   searchParams
@@ -10,13 +11,16 @@ export default async function PaymentsPage({
   searchParams: Promise<{ q?: string; status?: "PAID" | "UNPAID"; customerId?: string }>;
 }) {
   const params = await searchParams;
+  const profileId = await getActiveProfileId();
   const [customers, invoices, paidSummary, unpaidSummary] = await Promise.all([
     prisma.customer.findMany({
+      where: { profileId },
       orderBy: { companyName: "asc" },
       select: { id: true, companyName: true }
     }),
     prisma.invoice.findMany({
       where: {
+        profileId,
         AND: [
           params.status ? { paymentStatus: params.status } : {},
           params.customerId ? { customerId: params.customerId } : {},
@@ -34,8 +38,8 @@ export default async function PaymentsPage({
       include: { customer: true },
       orderBy: [{ invoiceDate: "desc" }, { createdAt: "desc" }]
     }),
-    prisma.invoice.aggregate({ where: { paymentStatus: "PAID" }, _sum: { grandTotal: true }, _count: true }),
-    prisma.invoice.aggregate({ where: { paymentStatus: "UNPAID" }, _sum: { grandTotal: true }, _count: true })
+    prisma.invoice.aggregate({ where: { profileId, paymentStatus: "PAID" }, _sum: { grandTotal: true }, _count: true }),
+    prisma.invoice.aggregate({ where: { profileId, paymentStatus: "UNPAID" }, _sum: { grandTotal: true }, _count: true })
   ]);
 
   return (

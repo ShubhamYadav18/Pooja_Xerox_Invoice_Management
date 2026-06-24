@@ -1,24 +1,27 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Button, LinkButton } from "@/components/ui";
 import { InvoiceTemplate } from "@/features/invoices/invoice-template";
 import { PdfActions } from "@/features/invoices/pdf-actions";
 import { deleteInvoice } from "@/server/actions/invoices";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfileId, getActiveSettings } from "@/server/profile";
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const profileId = await getActiveProfileId();
   const [invoice, settings] = await Promise.all([
-    prisma.invoice.findUnique({
-      where: { id },
+    prisma.invoice.findFirst({
+      where: { id, profileId },
       include: {
         customer: true,
         items: { include: { branch: true }, orderBy: { srNo: "asc" } }
       }
     }),
-    prisma.businessSettings.findFirst()
+    getActiveSettings()
   ]);
-  if (!invoice || !settings) notFound();
+  if (!invoice) redirect("/invoices");
+  if (!settings) notFound();
 
   return (
     <div>

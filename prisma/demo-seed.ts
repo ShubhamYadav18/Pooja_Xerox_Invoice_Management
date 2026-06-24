@@ -77,7 +77,7 @@ async function main() {
       ? customer.branches
       : await prisma.customerBranch.findMany({ where: { customerId: customer.id } });
 
-  const existingInvoice = await prisma.invoice.findUnique({
+  const existingInvoice = await prisma.invoice.findFirst({
     where: { invoiceNumber: "DEMO-001" }
   });
   if (existingInvoice) {

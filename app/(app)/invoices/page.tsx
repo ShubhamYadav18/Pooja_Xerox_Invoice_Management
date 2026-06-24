@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, Input, LinkButton, Select } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { getActiveProfileId } from "@/server/profile";
 
 export default async function InvoicesPage({
   searchParams
@@ -17,12 +18,15 @@ export default async function InvoicesPage({
   }>;
 }) {
   const params = await searchParams;
+  const profileId = await getActiveProfileId();
   const customers = await prisma.customer.findMany({
+    where: { profileId },
     orderBy: { companyName: "asc" },
     select: { id: true, companyName: true }
   });
   const invoices = await prisma.invoice.findMany({
     where: {
+      profileId,
       AND: [
         params.customerId ? { customerId: params.customerId } : {},
         params.status ? { status: params.status } : {},

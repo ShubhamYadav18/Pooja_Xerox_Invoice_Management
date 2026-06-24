@@ -2,6 +2,7 @@ import { InvoiceForm } from "@/features/invoices/invoice-form";
 import { TemplateInvoiceForm } from "@/features/invoices/template-invoice-form";
 import { createInvoice, generateInvoiceFromTemplate } from "@/server/actions/invoices";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfileId } from "@/server/profile";
 
 export default async function NewInvoicePage({
   searchParams
@@ -9,13 +10,15 @@ export default async function NewInvoicePage({
   searchParams: Promise<{ error?: string; duplicate?: string; mode?: string }>;
 }) {
   const params = await searchParams;
+  const profileId = await getActiveProfileId();
   const [customers, templateCustomers, duplicate] = await Promise.all([
     prisma.customer.findMany({
+      where: { profileId },
       include: { branches: true },
       orderBy: { companyName: "asc" }
     }),
     prisma.customer.findMany({
-      where: { templates: { some: { isActive: true } } },
+      where: { profileId, templates: { some: { isActive: true } } },
       include: {
         branches: { orderBy: { name: "asc" } },
         templates: {

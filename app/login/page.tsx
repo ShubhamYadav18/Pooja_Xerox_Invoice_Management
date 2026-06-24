@@ -32,9 +32,9 @@ export default async function LoginPage({
     <main className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm p-6">
         <div className="mb-6">
-          <img src="/PoojaXerox_Logo.png" alt="POOJA XEROX" className="mb-4 h-20 w-auto object-contain" />
+          <img src="/poojaenterpiseslogo.png" alt="Pooja Enterprises" className="mb-4 h-20 w-auto object-contain" />
           <p className="text-sm font-semibold uppercase tracking-widest text-primary">Admin Login</p>
-          <h1 className="mt-2 text-2xl font-semibold">POOJA XEROX</h1>
+          <h1 className="mt-2 text-2xl font-semibold">Invoice Suite</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage invoices, customers, GST and reports.</p>
         </div>
         {params.error ? (

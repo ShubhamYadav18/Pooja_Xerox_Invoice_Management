@@ -3,25 +3,27 @@ import { Card, LinkButton } from "@/components/ui";
 import { DashboardCharts } from "@/features/dashboard/dashboard-charts";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { getActiveProfileId } from "@/server/profile";
 
 export default async function DashboardPage() {
   const now = new Date();
+  const profileId = await getActiveProfileId();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
   const [customers, invoices, currentMonth, gst, recentInvoices, recentCustomers] = await Promise.all([
-    prisma.customer.count(),
-    prisma.invoice.count(),
-    prisma.invoice.aggregate({ where: { invoiceDate: { gte: monthStart, lte: monthEnd } }, _sum: { grandTotal: true } }),
-    prisma.invoice.aggregate({ _sum: { taxAmount: true } }),
-    prisma.invoice.findMany({ include: { customer: true }, orderBy: { invoiceDate: "desc" }, take: 6 }),
-    prisma.customer.findMany({ orderBy: { createdAt: "desc" }, take: 6 })
+    prisma.customer.count({ where: { profileId } }),
+    prisma.invoice.count({ where: { profileId } }),
+    prisma.invoice.aggregate({ where: { profileId, invoiceDate: { gte: monthStart, lte: monthEnd } }, _sum: { grandTotal: true } }),
+    prisma.invoice.aggregate({ where: { profileId }, _sum: { taxAmount: true } }),
+    prisma.invoice.findMany({ where: { profileId }, include: { customer: true }, orderBy: { invoiceDate: "desc" }, take: 6 }),
+    prisma.customer.findMany({ where: { profileId }, orderBy: { createdAt: "desc" }, take: 6 })
   ]);
 
   const trendMonths = Array.from({ length: 6 }).map((_, index) => startOfMonth(subMonths(now, 5 - index)));
   const trend = await Promise.all(
     trendMonths.map(async (date) => {
       const result = await prisma.invoice.aggregate({
-        where: { invoiceDate: { gte: date, lte: endOfMonth(date) } },
+        where: { profileId, invoiceDate: { gte: date, lte: endOfMonth(date) } },
         _sum: { grandTotal: true, taxAmount: true },
         _count: true
       });

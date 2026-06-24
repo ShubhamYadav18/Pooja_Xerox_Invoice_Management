@@ -191,6 +191,10 @@ body {
   background: #fff;
 }
 
+.invoice-total-grid > div:last-child {
+  border-left: 0;
+}
+
 .invoice-total-words {
   border-right: 1px solid #174e57;
   background: #fffaf0;
@@ -216,6 +220,10 @@ body {
 .invoice-total-row:last-child {
   background: #fff3cf;
   color: #111;
+}
+
+.invoice-total-row:last-child .invoice-total-label {
+  background: #fff3cf;
 }
 
 .invoice-footer-grid {

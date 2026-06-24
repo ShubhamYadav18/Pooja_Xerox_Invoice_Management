@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createCustomer } from "@/server/actions/customers";
 import { Button, Card, Field, Input } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfileId } from "@/server/profile";
 
 export default async function CustomersPage({
   searchParams
@@ -9,15 +10,19 @@ export default async function CustomersPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
+  const profileId = await getActiveProfileId();
   const customers = await prisma.customer.findMany({
-    where: q
-      ? {
-          OR: [
-            { companyName: { contains: q, mode: "insensitive" } },
-            { gstin: { contains: q, mode: "insensitive" } }
-          ]
-        }
-      : undefined,
+    where: {
+      profileId,
+      ...(q
+        ? {
+            OR: [
+              { companyName: { contains: q, mode: "insensitive" } },
+              { gstin: { contains: q, mode: "insensitive" } }
+            ]
+          }
+        : {})
+    },
     orderBy: { companyName: "asc" },
     include: { branches: true }
   });

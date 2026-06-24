@@ -3,6 +3,7 @@ import { differenceInCalendarDays, endOfYear, startOfMonth, startOfQuarter, star
 import { Card, Input, LinkButton } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { getActiveProfileId } from "@/server/profile";
 
 export default async function ReportsPage({
   searchParams
@@ -11,11 +12,13 @@ export default async function ReportsPage({
 }) {
   const params = await searchParams;
   const now = new Date();
+  const profileId = await getActiveProfileId();
   const range = {
     gte: params.from ? new Date(params.from) : undefined,
     lte: params.to ? new Date(`${params.to}T23:59:59`) : undefined
   };
   const where = {
+    profileId,
     status: { not: "CANCELLED" as const },
     ...(params.from || params.to ? { invoiceDate: range } : {})
   };
@@ -27,15 +30,15 @@ export default async function ReportsPage({
       orderBy: [{ invoiceDate: "desc" }, { createdAt: "desc" }]
     }),
     prisma.invoice.aggregate({
-      where: { status: { not: "CANCELLED" }, invoiceDate: { gte: startOfMonth(now) } },
+      where: { profileId, status: { not: "CANCELLED" }, invoiceDate: { gte: startOfMonth(now) } },
       _sum: { grandTotal: true }
     }),
     prisma.invoice.aggregate({
-      where: { status: { not: "CANCELLED" }, invoiceDate: { gte: startOfQuarter(now) } },
+      where: { profileId, status: { not: "CANCELLED" }, invoiceDate: { gte: startOfQuarter(now) } },
       _sum: { grandTotal: true }
     }),
     prisma.invoice.aggregate({
-      where: { status: { not: "CANCELLED" }, invoiceDate: { gte: startOfYear(now), lte: endOfYear(now) } },
+      where: { profileId, status: { not: "CANCELLED" }, invoiceDate: { gte: startOfYear(now), lte: endOfYear(now) } },
       _sum: { grandTotal: true }
     })
   ]);

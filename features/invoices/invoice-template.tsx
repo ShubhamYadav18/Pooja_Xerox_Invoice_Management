@@ -26,7 +26,7 @@ export function InvoiceTemplate({
           <header className="invoice-header">
             <div className="grid grid-cols-[32mm_1fr_32mm] items-center gap-2">
               <div className="flex justify-center">
-                <img src="/PoojaXerox_Logo.png" alt={`${settings.businessName} logo`} className="h-[28mm] w-[28mm] object-contain mix-blend-multiply" />
+                <img src={settings.logoUrl || "/poojaenterpiseslogo.png"} alt={`${settings.businessName} logo`} className="h-[28mm] w-[28mm] object-contain mix-blend-multiply" />
               </div>
               <div className="text-center">
                 <p className="text-[10px] font-semibold">{settings.invoiceHeaderText}</p>
@@ -142,19 +142,26 @@ export function InvoiceTemplate({
               <p className="font-bold">Total Invoice Amount in Words</p>
               <p className="mt-1">{invoice.amountInWords}</p>
             </div>
-            <div>
-              <Total label="Total Before Tax" value={formatCurrency(String(invoice.subtotal))} />
-              {invoice.taxMode === "IGST" ? (
-                <Total label={`IGST @ ${invoice.igstRate}%`} value={formatCurrency(String(invoice.igstAmount))} />
-              ) : (
-                <>
-                  <Total label={`CGST @ ${invoice.cgstRate}%`} value={formatCurrency(String(invoice.cgstAmount))} />
-                  <Total label={`SGST @ ${invoice.sgstRate}%`} value={formatCurrency(String(invoice.sgstAmount))} />
-                </>
-              )}
-              <Total label="Total Tax Amount" value={formatCurrency(String(invoice.taxAmount))} />
-              <Total label="Total Amount After Tax" value={formatCurrency(String(invoice.grandTotal))} strong />
-            </div>
+            {Number(invoice.taxAmount) > 0 ? (
+              <div>
+                <Total label="Total Amount before Tax" value={formatCurrency(String(invoice.subtotal))} />
+                {invoice.taxMode === "IGST" ? (
+                  <Total label={`Add: IGST @ ${invoice.igstRate}%`} value={formatCurrency(String(invoice.igstAmount))} />
+                ) : (
+                  <>
+                    <Total label={`Add: CGST @ ${invoice.cgstRate}%`} value={formatCurrency(String(invoice.cgstAmount))} />
+                    <Total label={`Add: SGST @ ${invoice.sgstRate}%`} value={formatCurrency(String(invoice.sgstAmount))} />
+                  </>
+                )}
+                <Total label="Total Tax Amount" value={formatCurrency(String(invoice.taxAmount))} />
+                <Total label="Total Amount after Tax" value={formatCurrency(String(invoice.grandTotal))} strong />
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateRows: "1fr auto", background: "#f8fcfc" }}>
+                <div style={{ borderBottom: "1px solid #174e57" }} />
+                <Total label="TOTAL" value={formatCurrency(String(invoice.grandTotal))} strong />
+              </div>
+            )}
           </section>
 
           <section className="invoice-footer-grid">
@@ -164,10 +171,10 @@ export function InvoiceTemplate({
               <div className="mt-3 max-w-[115mm] leading-4">
                 <p className="font-bold">Bank Details</p>
                 <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-0.5">
-                  <p>Bank: IndusInd Bank</p>
-                  <p>A/c No.: 201003022109</p>
-                  <p>Branch: Four Bungalows, Mumbai</p>
-                  <p>IFSC: INDB0001074</p>
+                  <p>Bank: {settings.bankName ?? "IndusInd Bank"}</p>
+                  <p>A/c No.: {settings.bankAccountNo ?? "201003022109"}</p>
+                  <p>Branch: {settings.bankBranch ?? "Four Bungalows, Mumbai"}</p>
+                  <p>IFSC: {settings.bankIfsc ?? "INDB0001074"}</p>
                 </div>
               </div>
             </div>
@@ -176,7 +183,7 @@ export function InvoiceTemplate({
               <p className="mt-2 font-bold">For {settings.businessName}</p>
               <div className="mt-3 flex h-24 items-center justify-center gap-3">
                 {settings.stampUrl ? <img alt="Stamp" src={settings.stampUrl} className="max-h-20 max-w-28" /> : null}
-                <img alt="Signature" src={settings.signatureUrl || "/poojaXeroxsign.png"} className="max-h-24 max-w-48 object-contain" />
+                {settings.signatureUrl ? <img alt="Signature" src={settings.signatureUrl} className="max-h-24 max-w-48 object-contain" /> : null}
               </div>
               <p className="mt-2 font-bold">Authorised Signatory</p>
             </div>

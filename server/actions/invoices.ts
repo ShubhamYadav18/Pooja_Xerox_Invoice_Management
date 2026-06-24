@@ -8,15 +8,18 @@ import { prisma } from "@/lib/prisma";
 import { invoiceSchema } from "@/lib/validations";
 import { writeAudit } from "@/server/audit";
 import { requireAdmin } from "@/server/authz";
+import { getActiveProfile, getActiveProfileId, getActiveSettings } from "@/server/profile";
 
-const INVOICE_NUMBER_FLOOR = 632;
-
-async function getNextInvoiceNumber() {
-  const invoices = await prisma.invoice.findMany({ select: { invoiceNumber: true } });
+async function getNextInvoiceNumber(profileId: string) {
+  const profile = await prisma.businessProfile.findUniqueOrThrow({ where: { id: profileId } });
+  const invoices = await prisma.invoice.findMany({
+    where: { profileId },
+    select: { invoiceNumber: true }
+  });
   const lastNumber = invoices.reduce((max, invoice) => {
     if (!/^\d+$/.test(invoice.invoiceNumber)) return max;
     return Math.max(max, Number(invoice.invoiceNumber));
-  }, INVOICE_NUMBER_FLOOR);
+  }, profile.invoiceNumberFloor);
 
   return String(lastNumber + 1);
 }
@@ -43,8 +46,9 @@ function parseInvoiceForm(formData: FormData) {
 
 export async function createInvoice(formData: FormData) {
   await requireAdmin();
+  const profileId = await getActiveProfileId();
   const input = parseInvoiceForm(formData);
-  const settings = await prisma.businessSettings.findFirst();
+  const settings = await getActiveSettings();
   const cgstRate = Number(settings?.cgstPercent ?? 9);
   const sgstRate = Number(settings?.sgstPercent ?? 9);
   const totals = calculateInvoiceTotals(input.items, cgstRate, sgstRate);
@@ -52,6 +56,7 @@ export async function createInvoice(formData: FormData) {
   try {
     const invoice = await prisma.invoice.create({
       data: {
+        profileId,
         invoiceNumber: input.invoiceNumber,
         invoiceDate: input.invoiceDate,
         customerId: input.customerId,
@@ -96,8 +101,11 @@ export async function createInvoice(formData: FormData) {
 
 export async function updateInvoice(id: string, formData: FormData) {
   await requireAdmin();
+  const profileId = await getActiveProfileId();
+  const existing = await prisma.invoice.findFirst({ where: { id, profileId } });
+  if (!existing) throw new Error("Invoice not found in active profile");
   const input = parseInvoiceForm(formData);
-  const settings = await prisma.businessSettings.findFirst();
+  const settings = await getActiveSettings();
   const totals = calculateInvoiceTotals(input.items, Number(settings?.cgstPercent ?? 9), Number(settings?.sgstPercent ?? 9));
 
   try {
@@ -151,6 +159,9 @@ export async function updateInvoice(id: string, formData: FormData) {
 
 export async function deleteInvoice(id: string) {
   await requireAdmin();
+  const profileId = await getActiveProfileId();
+  const existing = await prisma.invoice.findFirst({ where: { id, profileId } });
+  if (!existing) throw new Error("Invoice not found in active profile");
   await prisma.invoice.delete({ where: { id } });
   await writeAudit("DELETE", "Invoice", id);
   revalidatePath("/invoices");
@@ -159,6 +170,7 @@ export async function deleteInvoice(id: string) {
 
 export async function generateInvoiceFromTemplate(formData: FormData) {
   await requireAdmin();
+  const profileId = await getActiveProfileId();
 
   const invoiceDate = new Date(String(formData.get("invoiceDate") ?? ""));
   const templateId = String(formData.get("templateId") ?? "");
@@ -289,9 +301,10 @@ export async function generateInvoiceFromTemplate(formData: FormData) {
   );
 
   try {
-    const invoiceNumber = await getNextInvoiceNumber();
+    const invoiceNumber = await getNextInvoiceNumber(profileId);
     const invoice = await prisma.invoice.create({
       data: {
+        profileId,
         invoiceNumber,
         invoiceDate,
         customerId: template.customerId,

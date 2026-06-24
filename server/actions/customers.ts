@@ -7,11 +7,13 @@ import { prisma } from "@/lib/prisma";
 import { branchSchema, customerSchema } from "@/lib/validations";
 import { writeAudit } from "@/server/audit";
 import { requireAdmin } from "@/server/authz";
+import { getActiveProfileId } from "@/server/profile";
 
 export async function createCustomer(formData: FormData) {
   await requireAdmin();
+  const profileId = await getActiveProfileId();
   const parsed = customerSchema.parse(Object.fromEntries(formData));
-  const customer = await prisma.customer.create({ data: parsed });
+  const customer = await prisma.customer.create({ data: { ...parsed, profileId } });
   await writeAudit("CREATE", "Customer", customer.id, { companyName: customer.companyName });
   revalidatePath("/customers");
   redirect(`/customers/${customer.id}`);

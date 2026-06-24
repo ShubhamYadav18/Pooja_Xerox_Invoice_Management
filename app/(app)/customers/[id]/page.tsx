@@ -1,7 +1,8 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { createBranch, deleteBranch, deleteCustomer, updateBranch, updateCustomer } from "@/server/actions/customers";
 import { Button, Card, Field, Input, Textarea } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfileId } from "@/server/profile";
 
 export default async function CustomerDetailPage({
   params,
@@ -12,11 +13,12 @@ export default async function CustomerDetailPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const customer = await prisma.customer.findUnique({
-    where: { id },
+  const profileId = await getActiveProfileId();
+  const customer = await prisma.customer.findFirst({
+    where: { id, profileId },
     include: { branches: { orderBy: { name: "asc" } } }
   });
-  if (!customer) notFound();
+  if (!customer) redirect("/customers");
 
   return (
     <div className="grid gap-6">

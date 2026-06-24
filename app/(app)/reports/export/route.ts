@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAdminRequest } from "@/server/authz";
+import { getActiveProfileId } from "@/server/profile";
 
 export async function GET(request: NextRequest) {
   if (!(await isAdminRequest())) {
@@ -11,16 +12,19 @@ export async function GET(request: NextRequest) {
   const from = params.get("from");
   const to = params.get("to");
   const format = params.get("format") ?? "csv";
+  const profileId = await getActiveProfileId();
   const invoices = await prisma.invoice.findMany({
-    where:
-      from || to
+    where: {
+      profileId,
+      ...(from || to
         ? {
             invoiceDate: {
               gte: from ? new Date(from) : undefined,
               lte: to ? new Date(`${to}T23:59:59`) : undefined
             }
           }
-        : undefined,
+        : {})
+    },
     include: { customer: true },
     orderBy: { invoiceDate: "asc" }
   });

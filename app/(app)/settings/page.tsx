@@ -1,9 +1,10 @@
 import { updateSettings } from "@/server/actions/settings";
 import { Card, Field, Input, Textarea, Button } from "@/components/ui";
-import { prisma } from "@/lib/prisma";
+import { getActiveProfileId, getActiveSettings } from "@/server/profile";
 
 export default async function SettingsPage() {
-  const settings = await prisma.businessSettings.findFirst();
+  const profileId = await getActiveProfileId();
+  const settings = await getActiveSettings();
 
   return (
     <div className="grid gap-6">
@@ -12,9 +13,9 @@ export default async function SettingsPage() {
         <p className="text-sm text-muted-foreground">All invoice branding and tax defaults are managed here.</p>
       </div>
       <Card className="p-4">
-        <form action={updateSettings.bind(null, null)} className="grid gap-4 md:grid-cols-2">
+        <form action={updateSettings.bind(null, profileId)} className="grid gap-4 md:grid-cols-2">
           <Field label="Business Name">
-            <Input name="businessName" defaultValue={settings?.businessName ?? "POOJA XEROX"} required />
+            <Input name="businessName" defaultValue={settings?.businessName ?? "POOJA ENTERPRISES"} required />
           </Field>
           <Field label="GST Number">
             <Input name="gstNumber" defaultValue={settings?.gstNumber ?? ""} required />

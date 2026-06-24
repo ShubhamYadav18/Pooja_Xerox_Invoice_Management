@@ -3,6 +3,7 @@ import { PrismaClient, TaxMode, TemplateItemType } from "@prisma/client";
 const prisma = new PrismaClient();
 
 type CustomerInput = {
+  profileId?: string;
   companyName: string;
   gstin: string;
   state: string;
@@ -18,6 +19,7 @@ type BranchInput = {
 };
 
 type TemplateInput = {
+  profileId?: string;
   code: string;
   name: string;
   customerId: string;
@@ -48,7 +50,7 @@ type TemplateInput = {
 };
 
 async function getOrCreateCustomer(input: CustomerInput) {
-  const existing = await prisma.customer.findFirst({ where: { companyName: input.companyName } });
+  const existing = await prisma.customer.findFirst({ where: { companyName: input.companyName, profileId: input.profileId } });
   if (existing) {
     return prisma.customer.update({ where: { id: existing.id }, data: input });
   }
@@ -66,10 +68,15 @@ async function getOrCreateBranch(customerId: string, input: BranchInput) {
 }
 
 async function upsertTemplate(input: TemplateInput) {
+  const poojaXerox = input.profileId
+    ? null
+    : await prisma.businessProfile.findUnique({ where: { code: "POOJA_XEROX" }, select: { id: true } });
+  const profileId = input.profileId ?? poojaXerox?.id;
   const template = await prisma.invoiceTemplate.upsert({
     where: { code: input.code },
     update: {
       name: input.name,
+      profileId,
       customerId: input.customerId,
       branchId: input.branchId,
       billToName: input.billToName,
@@ -86,6 +93,7 @@ async function upsertTemplate(input: TemplateInput) {
     create: {
       code: input.code,
       name: input.name,
+      profileId,
       customerId: input.customerId,
       branchId: input.branchId,
       billToName: input.billToName,
@@ -136,7 +144,14 @@ function fixedRental(particulars: string, amount: number, branchId?: string, srN
 }
 
 async function main() {
+  const poojaXerox = await prisma.businessProfile.upsert({
+    where: { code: "POOJA_XEROX" },
+    update: { name: "Pooja Xerox", invoiceFormat: "POOJA_XEROX", invoiceNumberFloor: 632, isActive: true },
+    create: { code: "POOJA_XEROX", name: "Pooja Xerox", invoiceFormat: "POOJA_XEROX", invoiceNumberFloor: 632 }
+  });
+
   const ch = await getOrCreateCustomer({
+    profileId: poojaXerox.id,
     companyName: "C H Robinson Worldwide Freight India Pvt Ltd",
     gstin: "27AACCC9617L1ZA",
     state: "Maharashtra",
@@ -144,6 +159,7 @@ async function main() {
   });
 
   const elementis = await getOrCreateCustomer({
+    profileId: poojaXerox.id,
     companyName: "Elementis Specialties (India) Pvt. Ltd.",
     gstin: "27AACCE7554Q1ZY",
     state: "Maharashtra",
@@ -151,6 +167,7 @@ async function main() {
   });
 
   const nbs = await getOrCreateCustomer({
+    profileId: poojaXerox.id,
     companyName: "NBS INTERNATIONAL LTD",
     gstin: "27AAACN3646E1ZN",
     state: "Maharashtra",
@@ -158,6 +175,7 @@ async function main() {
   });
 
   const epl = await getOrCreateCustomer({
+    profileId: poojaXerox.id,
     companyName: "EPL LIMITED",
     gstin: "27AAACE1568L2ZF",
     state: "Maharashtra",
@@ -456,7 +474,185 @@ async function main() {
     items: [fixedRental("Xerox Copy Print out of A/4 Size\nFor Photo Copy Print Out", 75000, eplLowerParel.id)]
   });
 
-  console.log("Seeded invoice templates from uploaded PDF formats.");
+  // ============================
+  // POOJA ENTERPRISES CUSTOMERS & TEMPLATES
+  // ============================
+  const pe = await prisma.businessProfile.upsert({
+    where: { code: "POOJA_ENTERPRISES" },
+    update: { name: "Pooja Enterprises", invoiceFormat: "POOJA_ENTERPRISES", isActive: true },
+    create: { code: "POOJA_ENTERPRISES", name: "Pooja Enterprises", invoiceFormat: "POOJA_ENTERPRISES", invoiceNumberFloor: 0 }
+  });
+
+  // --- Bhave Warehousing & Storage Pvt. Ltd. ---
+  const bhave = await getOrCreateCustomer({
+    profileId: pe.id,
+    companyName: "Bhave Warehousing & Storage Pvt. Ltd.",
+    gstin: "",
+    state: "Maharashtra",
+    stateCode: "27"
+  });
+  const bhaveBranch = await getOrCreateBranch(bhave.id, {
+    name: "Taloja",
+    address: "Village Kiravali, Old Mumbai Pune Road,\nPost-Taloja, Tal-Panvel, Dist-Raigad, Maharashtra-410208",
+    city: "Raigad",
+    state: "Maharashtra",
+    stateCode: "27"
+  });
+  await upsertTemplate({
+    profileId: pe.id,
+    code: "PE-BHAVE",
+    name: "Bhave Warehousing - Monthly",
+    customerId: bhave.id,
+    branchId: bhaveBranch.id,
+    billToName: bhave.companyName,
+    billToAddress: bhaveBranch.address,
+    billToState: "Maharashtra",
+    billToStateCode: "27",
+    taxMode: TaxMode.CGST_SGST,
+    items: [fixedRental("XEROX COPY AND PRINT OUT OF A/4 SIZE\nStarting date:-Month of {billingMonth}\nxerox copy , print out and scanning the", 7500)]
+  });
+
+  // --- Aatmagya Yuvaadhar Foundation ---
+  const aatmagya = await getOrCreateCustomer({
+    profileId: pe.id,
+    companyName: "Aatmagya Yuvaadhar Foundation",
+    gstin: "",
+    state: "Maharashtra",
+    stateCode: "27"
+  });
+  const aatmagyaBranch = await getOrCreateBranch(aatmagya.id, {
+    name: "Kamshet",
+    address: "Vaibhav Ashray, Survey No. 141/142/143, Old Pune -\nMumbai Highway, Kamshet, Pune- 41405",
+    city: "Pune",
+    state: "Maharashtra",
+    stateCode: "27"
+  });
+  await upsertTemplate({
+    profileId: pe.id,
+    code: "PE-AATMAGYA",
+    name: "Aatmagya - Meter + Extra Copy",
+    customerId: aatmagya.id,
+    branchId: aatmagyaBranch.id,
+    billToName: aatmagya.companyName,
+    billToAddress: aatmagyaBranch.address,
+    billToState: "Maharashtra",
+    billToStateCode: "27",
+    taxMode: TaxMode.CGST_SGST,
+    items: [
+      {
+        srNo: 1,
+        itemType: TemplateItemType.FIXED,
+        particulars: "XEROX COPY AND PRINT OUT OF A/4 SIZE\nStarting date:- {billingMonth}\n\nStarting Reading of Print and Photo copy",
+        amount: 8000,
+        qty: 1,
+        rate: 8000
+      },
+      { srNo: 2, itemType: TemplateItemType.METER, particulars: "Print out\nTotal Reading", rate: 0.5, startCount: 0, endCount: 0 },
+      { srNo: 3, itemType: TemplateItemType.METER, particulars: "XEROX COPY\nTotal Reading", rate: 0.5, startCount: 0, endCount: 0 },
+      { srNo: 4, itemType: TemplateItemType.EXTRA_COPY, particulars: "Extra Copy", uom: "Nos", rate: 0.5, qty: 0, amount: 0 }
+    ]
+  });
+
+  // --- Suketu Jiten Mody ---
+  const suketu = await getOrCreateCustomer({
+    profileId: pe.id,
+    companyName: "SUKETU JITEN MODY",
+    gstin: "",
+    state: "Maharashtra",
+    stateCode: "27"
+  });
+  const suketuBranch = await getOrCreateBranch(suketu.id, {
+    name: "Tardeo",
+    address: "515 ARUN CHAMBERS 5TH FLOOR TARDEO\nMumbai -",
+    city: "Mumbai",
+    state: "Maharashtra",
+    stateCode: "27"
+  });
+  await upsertTemplate({
+    profileId: pe.id,
+    code: "PE-SUKETU",
+    name: "Suketu Jiten Mody - Monthly",
+    customerId: suketu.id,
+    branchId: suketuBranch.id,
+    billToName: suketu.companyName,
+    billToAddress: suketuBranch.address,
+    billToState: "Maharashtra",
+    billToStateCode: "27",
+    taxMode: TaxMode.CGST_SGST,
+    items: [fixedRental("XEROX COPY AND PRINT OUT OF A/4 SIZE\n1 Machine\nStarting date:-Month of {billingMonth}\nxerox copy , print out and scanning the", 6000)]
+  });
+
+  // --- Vyoman India Pvt. Ltd ---
+  const vyomanIndia = await getOrCreateCustomer({
+    profileId: pe.id,
+    companyName: "Vyoman India pvt. Ltd",
+    gstin: "",
+    state: "Maharashtra",
+    stateCode: "27"
+  });
+  const vyomanIndiaBranch = await getOrCreateBranch(vyomanIndia.id, {
+    name: "Lower Parel",
+    address: "14 Floor, Times Tower, Kamla city, Senapati, Bapat Marg,\nLower parel Mumbai - 4000013",
+    city: "Mumbai",
+    state: "Maharashtra",
+    stateCode: "27"
+  });
+  await upsertTemplate({
+    profileId: pe.id,
+    code: "PE-VYOMAN-INDIA-COLOR",
+    name: "Vyoman India - Color Machine",
+    customerId: vyomanIndia.id,
+    branchId: vyomanIndiaBranch.id,
+    billToName: vyomanIndia.companyName,
+    billToAddress: vyomanIndiaBranch.address,
+    billToState: "Maharashtra",
+    billToStateCode: "27",
+    taxMode: TaxMode.CGST_SGST,
+    items: [
+      {
+        srNo: 1,
+        itemType: TemplateItemType.FIXED,
+        particulars: "XEROX COPY AND PRINT OUT OF A/4 A/3 SIZE\nCOLOUR MACHINE\n1 Machine\nStarting date:- Month of {billingMonth}",
+        amount: 5500,
+        qty: 1,
+        rate: 5500
+      },
+      { srNo: 2, itemType: TemplateItemType.METER, particulars: "A/4 Size B/W\nTotal Copy", uom: "Page", rate: 5, startCount: 0, endCount: 0 },
+      { srNo: 3, itemType: TemplateItemType.METER, particulars: "A/4 Size Colour\nTotal Copy", uom: "Page", rate: 5, startCount: 0, endCount: 0 },
+      { srNo: 4, itemType: TemplateItemType.METER, particulars: "A/3 Size\nTotal Copy", uom: "", rate: 8, startCount: 0, endCount: 0 }
+    ]
+  });
+
+  // --- Vyoman Infraprojects Private Limited ---
+  const vyomanInfra = await getOrCreateCustomer({
+    profileId: pe.id,
+    companyName: "Vyoman Infraprojects Private Limited",
+    gstin: "",
+    state: "Maharashtra",
+    stateCode: "27"
+  });
+  const vyomanInfraBranch = await getOrCreateBranch(vyomanInfra.id, {
+    name: "Lower Parel",
+    address: "14 Floor, Times Tower, Kamla city, Senapati, Bapat Marg,\nLower parel Mumbai - 4000013",
+    city: "Mumbai",
+    state: "Maharashtra",
+    stateCode: "27"
+  });
+  await upsertTemplate({
+    profileId: pe.id,
+    code: "PE-VYOMAN-INFRA",
+    name: "Vyoman Infraprojects - Monthly (Gorai Park)",
+    customerId: vyomanInfra.id,
+    branchId: vyomanInfraBranch.id,
+    billToName: vyomanInfra.companyName,
+    billToAddress: vyomanInfraBranch.address,
+    billToState: "Maharashtra",
+    billToStateCode: "27",
+    taxMode: TaxMode.CGST_SGST,
+    items: [fixedRental("XEROX COPY AND PRINT OUT OF A/4 SIZE\n1 Machine\n2525\nStarting date:- Month of {billingMonth}\nxerox copy , print out and scanning\n\nGorai Park", 7500)]
+  });
+
+  console.log("Seeded invoice templates for Pooja Xerox and Pooja Enterprises.");
 }
 
 main()
