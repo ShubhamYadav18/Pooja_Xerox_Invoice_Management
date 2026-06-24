@@ -93,6 +93,9 @@ export default async function NewInvoicePage({
               machineModel: template.machineModel,
               poNumber: template.poNumber,
               taxMode: template.taxMode,
+              cgstRate: Number(template.cgstRate),
+              sgstRate: Number(template.sgstRate),
+              igstRate: Number(template.igstRate),
               items: template.items.map((item) => ({
                 id: item.id,
                 srNo: item.srNo,

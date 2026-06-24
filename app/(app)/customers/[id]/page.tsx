@@ -94,39 +94,42 @@ export default async function CustomerDetailPage({
         <Card className="overflow-hidden">
           <div className="border-b p-4 font-semibold">Branches</div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-sm">
+            <table className="w-full min-w-[960px] text-sm">
               <thead className="bg-muted text-left">
                 <tr>
-                  <th className="p-3">Branch</th>
-                  <th className="p-3">City</th>
+                  <th className="p-3 w-[200px]">Branch Name</th>
+                  <th className="p-3 w-[150px]">City</th>
+                  <th className="p-3 w-[200px]">State & Code</th>
                   <th className="p-3">Address</th>
-                  <th className="p-3"></th>
+                  <th className="p-3 w-[160px] text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {customer.branches.map((branch) => (
                   <tr key={branch.id} className="border-t align-top">
                     <td className="p-3">
-                      <form id={`branch-${branch.id}`} action={updateBranch.bind(null, branch.id)} className="grid gap-2">
+                      <form id={`branch-${branch.id}`} action={updateBranch.bind(null, branch.id)}>
                         <input type="hidden" name="customerId" value={customer.id} />
                         <Input name="name" defaultValue={branch.name} required />
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input name="city" defaultValue={branch.city} required />
-                          <Input name="stateCode" defaultValue={branch.stateCode} required />
-                        </div>
                       </form>
                     </td>
                     <td className="p-3">
-                      <Input form={`branch-${branch.id}`} name="state" defaultValue={branch.state} required />
+                      <Input form={`branch-${branch.id}`} name="city" defaultValue={branch.city} required />
                     </td>
                     <td className="p-3">
-                      <Textarea form={`branch-${branch.id}`} name="address" defaultValue={branch.address} required />
+                      <div className="grid grid-cols-[1fr_70px] gap-2">
+                        <Input form={`branch-${branch.id}`} name="state" defaultValue={branch.state} required />
+                        <Input form={`branch-${branch.id}`} name="stateCode" defaultValue={branch.stateCode} required />
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      <Textarea form={`branch-${branch.id}`} name="address" defaultValue={branch.address} required className="min-h-[40px] resize-y" />
                     </td>
                     <td className="p-3">
                       <div className="flex justify-end gap-2">
-                        <Button form={`branch-${branch.id}`} type="submit" variant="secondary" className="h-8 px-3">Save</Button>
+                        <Button form={`branch-${branch.id}`} type="submit" variant="secondary" className="h-9 px-3">Save</Button>
                         <form action={deleteBranch.bind(null, branch.id, customer.id)}>
-                          <Button variant="secondary" className="h-8 px-3">Delete</Button>
+                          <Button variant="secondary" className="h-9 px-3">Delete</Button>
                         </form>
                       </div>
                     </td>

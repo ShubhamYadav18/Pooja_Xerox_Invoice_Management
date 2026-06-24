@@ -34,6 +34,9 @@ type Template = {
   machineModel: string | null;
   poNumber: string | null;
   taxMode: "CGST_SGST" | "IGST";
+  cgstRate: number;
+  sgstRate: number;
+  igstRate: number;
   items: TemplateItem[];
 };
 
@@ -136,7 +139,7 @@ export function TemplateInvoiceForm({
                 <strong>State:</strong> {selectedTemplate.billToState} ({selectedTemplate.billToStateCode})
               </p>
               <p>
-                <strong>Tax:</strong> {selectedTemplate.taxMode === "IGST" ? "IGST @ 18%" : "CGST @ 9% + SGST @ 9%"}
+                <strong>Tax:</strong> {selectedTemplate.taxMode === "IGST" ? `IGST @ ${selectedTemplate.igstRate}%` : `CGST @ ${selectedTemplate.cgstRate}% + SGST @ ${selectedTemplate.sgstRate}%`}
               </p>
               {selectedTemplate.machineModel ? (
                 <p>

@@ -31,8 +31,8 @@ export default async function LoginPage({
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm p-6">
-        <div className="mb-6">
-          <img src="/poojaenterpiseslogo.png" alt="Pooja Enterprises" className="mb-4 h-20 w-auto object-contain" />
+        <div className="mb-6 flex flex-col items-center text-center">
+          <img src="/poojaenterpiseslogo.png" alt="Pooja Enterprises" className="mb-4 h-24 w-auto object-contain drop-shadow-sm" />
           <p className="text-sm font-semibold uppercase tracking-widest text-primary">Admin Login</p>
           <h1 className="mt-2 text-2xl font-semibold">Invoice Suite</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage invoices, customers, GST and reports.</p>
