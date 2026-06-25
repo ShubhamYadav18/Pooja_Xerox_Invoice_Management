@@ -129,7 +129,7 @@ export function InvoiceTemplate({
                   <tr key={item.id}>
                     <Td className="text-center">{item.srNo}</Td>
                     <Td>
-                      <div className="font-medium">{item.particulars}</div>
+                      <div className="font-medium whitespace-pre-wrap">{item.particulars}</div>
                       {item.branch ? <div className="mt-1 text-[9px]">Branch: {item.branch.name}</div> : null}
                     </Td>
                     <Td className="text-center">{item.sacCode}</Td>
