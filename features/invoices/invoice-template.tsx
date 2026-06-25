@@ -18,6 +18,7 @@ export function InvoiceTemplate({
   const billToState = invoice.billToState || invoice.customer.state;
   const billToStateCode = invoice.billToStateCode || invoice.customer.stateCode;
   const billToAddress = invoice.billToAddress || invoice.items.find((item) => item.branch)?.branch?.address || invoice.customer.state;
+  const isPE = settings.businessName?.toLowerCase().includes("pooja enterprises");
 
   return (
     <div className="invoice-sheet mx-auto bg-white p-0 text-black shadow print:shadow-none">
@@ -42,7 +43,7 @@ export function InvoiceTemplate({
           </header>
 
           <div className="invoice-banner">
-            <span>Tax Invoice</span>
+            <span>{isPE ? "Invoice" : "Tax Invoice"}</span>
           </div>
 
           <section className="invoice-details-grid">
@@ -88,7 +89,7 @@ export function InvoiceTemplate({
             </div>
           </section>
 
-          <div className={`invoice-items-box${invoice.items.length > 5 ? " invoice-items-compact" : ""}`}>
+          <div className={`invoice-items-box relative${invoice.items.length > 5 ? " invoice-items-compact" : ""}`}>
             <div className="invoice-column-guides" aria-hidden="true">
               <span style={{ left: "11mm" }} />
               <span style={{ left: "84mm" }} />
@@ -97,6 +98,11 @@ export function InvoiceTemplate({
               <span style={{ left: "140mm" }} />
               <span style={{ left: "164mm" }} />
             </div>
+            {isPE ? (
+              <div className="absolute bottom-1 left-[13mm] text-[10px] font-medium text-red-600 uppercase tracking-wide">
+                Labour Charges Only
+              </div>
+            ) : null}
             <table className="invoice-table">
               <colgroup>
                 <col className="w-[11mm]" />
