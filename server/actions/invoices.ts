@@ -224,7 +224,7 @@ export async function generateInvoiceFromTemplate(formData: FormData) {
         ? `\nStart Count: ${startCount}   End Count: ${endCount}`
         : "";
     const freeLine = item.itemType === "METER" && Number(item.freeQty ?? 0) > 0 ? `\nLess Free Copies: ${item.freeQty}` : "";
-    const monthLine = billingMonth ? `\nFor the month of ${billingMonth}` : "";
+    const monthLine = billingMonth && !item.particulars.includes("{billingMonth}") ? `\nFor the month of ${billingMonth}` : "";
 
     const particulars = item.particulars
       .replaceAll("{billingMonth}", billingMonth)
