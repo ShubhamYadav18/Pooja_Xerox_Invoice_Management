@@ -56,6 +56,7 @@ export function amountToIndianWords(value: number) {
 export type InvoiceLineInput = {
   qty: number;
   rate: number;
+  amount?: number;
 };
 
 export function calculateInvoiceTotals(
@@ -65,7 +66,7 @@ export function calculateInvoiceTotals(
   taxMode: "CGST_SGST" | "IGST" = "CGST_SGST",
   igstRate = 18
 ) {
-  const subtotal = roundMoney(items.reduce((sum, item) => sum + item.qty * item.rate, 0));
+  const subtotal = roundMoney(items.reduce((sum, item) => sum + (item.amount ?? item.qty * item.rate), 0));
   const cgstAmount = taxMode === "CGST_SGST" ? roundMoney((subtotal * cgstRate) / 100) : 0;
   const sgstAmount = taxMode === "CGST_SGST" ? roundMoney((subtotal * sgstRate) / 100) : 0;
   const igstAmount = taxMode === "IGST" ? roundMoney((subtotal * igstRate) / 100) : 0;
