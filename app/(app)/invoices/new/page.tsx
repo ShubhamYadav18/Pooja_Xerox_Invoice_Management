@@ -14,7 +14,7 @@ export default async function NewInvoicePage({
   const [customers, templateCustomers, duplicate] = await Promise.all([
     prisma.customer.findMany({
       where: { profileId },
-      include: { branches: true },
+      include: { branches: true, templates: { where: { isActive: true } } },
       orderBy: { companyName: "asc" }
     }),
     prisma.customer.findMany({
@@ -47,7 +47,28 @@ export default async function NewInvoicePage({
       </div>
       {params.mode === "custom" || duplicate ? (
         <InvoiceForm
-          customers={customers}
+          customers={customers.map((customer) => ({
+            id: customer.id,
+            companyName: customer.companyName,
+            gstin: customer.gstin,
+            state: customer.state,
+            stateCode: customer.stateCode,
+            branches: customer.branches.map((branch) => ({
+              id: branch.id,
+              name: branch.name,
+              address: branch.address
+            })),
+            templates: customer.templates.map((template) => ({
+              id: template.id,
+              name: template.name,
+              code: template.code,
+              billToName: template.billToName,
+              billToAddress: template.billToAddress,
+              billToGstin: template.billToGstin,
+              billToState: template.billToState,
+              billToStateCode: template.billToStateCode
+            }))
+          }))}
           action={createInvoice}
           error={params.error}
           initialInvoice={

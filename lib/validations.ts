@@ -34,6 +34,7 @@ export const invoiceSchema = z.object({
   customerId: z.string().min(1),
   notes: z.string().optional(),
   status: z.enum(["DRAFT", "ISSUED", "CANCELLED"]).default("ISSUED"),
+  sourceTemplateId: z.string().optional().nullable(),
   items: z.array(invoiceItemSchema).min(1, "At least one item is required")
 });
 

@@ -17,6 +17,16 @@ type Customer = {
     name: string;
     address: string;
   }[];
+  templates?: {
+    id: string;
+    name: string;
+    code: string;
+    billToName: string;
+    billToAddress: string;
+    billToGstin: string | null;
+    billToState: string;
+    billToStateCode: string;
+  }[];
 };
 
 type Item = {
@@ -34,6 +44,7 @@ type InitialInvoice = {
   customerId: string;
   status?: "DRAFT" | "ISSUED" | "CANCELLED";
   notes?: string | null;
+  sourceTemplateId?: string | null;
   items: Item[];
 };
 
@@ -63,6 +74,7 @@ export function InvoiceForm({
   const [customerId, setCustomerId] = useState(initialInvoice?.customerId ?? "");
   const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "CANCELLED">(initialInvoice?.status ?? "ISSUED");
   const [notes, setNotes] = useState(initialInvoice?.notes ?? "");
+  const [sourceTemplateId, setSourceTemplateId] = useState(initialInvoice?.sourceTemplateId ?? "");
   const [items, setItems] = useState<Item[]>(initialInvoice?.items?.length ? initialInvoice.items : [blankItem]);
 
   useEffect(() => {
@@ -75,16 +87,27 @@ export function InvoiceForm({
     setCustomerId(draft.customerId ?? "");
     setStatus(draft.status ?? "ISSUED");
     setNotes(draft.notes ?? "");
+    setSourceTemplateId(draft.sourceTemplateId ?? "");
     setItems(draft.items?.length ? draft.items : [blankItem]);
   }, [draftKey, initialInvoice]);
 
   useEffect(() => {
-    const payload = { invoiceNumber, invoiceDate, customerId, status, notes, items };
+    const payload = { invoiceNumber, invoiceDate, customerId, status, notes, sourceTemplateId, items };
     window.localStorage.setItem(draftKey, JSON.stringify(payload));
-  }, [customerId, draftKey, invoiceDate, invoiceNumber, items, notes, status]);
+  }, [customerId, draftKey, invoiceDate, invoiceNumber, items, notes, status, sourceTemplateId]);
 
   const customer = customers.find((entry) => entry.id === customerId);
+  const templates = customer?.templates ?? [];
+  const selectedTemplate = templates.find((t) => t.id === sourceTemplateId);
   const totals = useMemo(() => calculateInvoiceTotals(items), [items]);
+
+  useEffect(() => {
+    if (customer && !templates.some((t) => t.id === sourceTemplateId)) {
+      setSourceTemplateId(templates[0]?.id ?? "");
+    } else if (!customer) {
+      setSourceTemplateId("");
+    }
+  }, [customerId, templates, customer, sourceTemplateId]);
 
   function updateItem(index: number, patch: Partial<Item>) {
     setItems((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)));
@@ -96,6 +119,7 @@ export function InvoiceForm({
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
       ) : null}
       <input type="hidden" name="items" value={JSON.stringify(items)} />
+      <input type="hidden" name="sourceTemplateId" value={sourceTemplateId} />
       <section className="grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-4">
         <Field label="Invoice Number">
           <Input name="invoiceNumber" value={invoiceNumber} onChange={(event) => setInvoiceNumber(event.target.value)} required />
@@ -113,6 +137,22 @@ export function InvoiceForm({
             ))}
           </Select>
         </Field>
+        {templates.length > 0 ? (
+          <Field label="Invoice Template">
+            <Select
+              value={sourceTemplateId}
+              onChange={(event) => setSourceTemplateId(event.target.value)}
+              required
+            >
+              <option value="">Select a template/location</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.code})
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : null}
         <Field label="Status">
           <Select name="status" value={status} onChange={(event) => setStatus(event.target.value as "DRAFT" | "ISSUED" | "CANCELLED")}>
             <option value="ISSUED">Issued</option>
@@ -122,10 +162,11 @@ export function InvoiceForm({
         </Field>
         {customer ? (
           <div className="rounded-md bg-muted p-3 text-sm md:col-span-4">
-            <p className="font-medium">{customer.companyName}</p>
-            <p>GSTIN: {customer.gstin || "Not set"}</p>
+            <p className="font-medium">{selectedTemplate ? selectedTemplate.billToName : customer.companyName}</p>
+            <p>GSTIN: {selectedTemplate ? (selectedTemplate.billToGstin || "Not set") : (customer.gstin || "Not set")}</p>
+            <p>Address: {selectedTemplate ? selectedTemplate.billToAddress : (customer.branches[0]?.address ?? "-")}</p>
             <p>
-              State: {customer.state} ({customer.stateCode})
+              State: {selectedTemplate ? selectedTemplate.billToState : customer.state} ({selectedTemplate ? selectedTemplate.billToStateCode : customer.stateCode})
             </p>
           </div>
         ) : null}

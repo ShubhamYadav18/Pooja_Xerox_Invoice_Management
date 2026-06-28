@@ -1,6 +1,6 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
+import { Prisma, TaxMode } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { calculateInvoiceTotals } from "@/lib/invoice-calculations";
@@ -39,6 +39,7 @@ function parseInvoiceForm(formData: FormData) {
     customerId: formData.get("customerId"),
     notes: formData.get("notes"),
     status: formData.get("status") || "ISSUED",
+    sourceTemplateId: formData.get("sourceTemplateId") || undefined,
     items: JSON.parse(String(formData.get("items") ?? "[]")) as unknown
   };
   return invoiceSchema.parse(raw);
@@ -53,6 +54,39 @@ export async function createInvoice(formData: FormData) {
   const sgstRate = Number(settings?.sgstPercent ?? 9);
   const totals = calculateInvoiceTotals(input.items, cgstRate, sgstRate);
 
+  const customer = await prisma.customer.findUniqueOrThrow({
+    where: { id: input.customerId },
+    include: { branches: true }
+  });
+
+  let billToName = customer.companyName;
+  let billToAddress = customer.branches[0]?.address ?? customer.state;
+  let billToGstin = customer.gstin;
+  let billToState = customer.state;
+  let billToStateCode = customer.stateCode;
+  let sourceTemplateId = input.sourceTemplateId || undefined;
+  let placeLabel = null;
+  let machineModel = null;
+  let poNumber = null;
+  let taxMode: TaxMode = "CGST_SGST";
+
+  if (input.sourceTemplateId) {
+    const template = await prisma.invoiceTemplate.findUnique({
+      where: { id: input.sourceTemplateId }
+    });
+    if (template) {
+      billToName = template.billToName;
+      billToAddress = template.billToAddress;
+      billToGstin = template.billToGstin;
+      billToState = template.billToState;
+      billToStateCode = template.billToStateCode;
+      placeLabel = template.placeLabel;
+      machineModel = template.machineModel;
+      poNumber = template.poNumber;
+      taxMode = template.taxMode;
+    }
+  }
+
   try {
     const invoice = await prisma.invoice.create({
       data: {
@@ -60,9 +94,18 @@ export async function createInvoice(formData: FormData) {
         invoiceNumber: input.invoiceNumber,
         invoiceDate: input.invoiceDate,
         customerId: input.customerId,
+        sourceTemplateId,
+        billToName,
+        billToAddress,
+        billToGstin,
+        billToState,
+        billToStateCode,
+        placeLabel,
+        machineModel,
+        poNumber,
+        taxMode,
         notes: input.notes,
         status: input.status,
-        taxMode: "CGST_SGST",
         subtotal: totals.subtotal,
         cgstRate: totals.cgstRate,
         sgstRate: totals.sgstRate,
@@ -108,6 +151,39 @@ export async function updateInvoice(id: string, formData: FormData) {
   const settings = await getActiveSettings();
   const totals = calculateInvoiceTotals(input.items, Number(settings?.cgstPercent ?? 9), Number(settings?.sgstPercent ?? 9));
 
+  const customer = await prisma.customer.findUniqueOrThrow({
+    where: { id: input.customerId },
+    include: { branches: true }
+  });
+
+  let billToName = customer.companyName;
+  let billToAddress = customer.branches[0]?.address ?? customer.state;
+  let billToGstin = customer.gstin;
+  let billToState = customer.state;
+  let billToStateCode = customer.stateCode;
+  let sourceTemplateId = input.sourceTemplateId || null;
+  let placeLabel = null;
+  let machineModel = null;
+  let poNumber = null;
+  let taxMode: TaxMode = "CGST_SGST";
+
+  if (input.sourceTemplateId) {
+    const template = await prisma.invoiceTemplate.findUnique({
+      where: { id: input.sourceTemplateId }
+    });
+    if (template) {
+      billToName = template.billToName;
+      billToAddress = template.billToAddress;
+      billToGstin = template.billToGstin;
+      billToState = template.billToState;
+      billToStateCode = template.billToStateCode;
+      placeLabel = template.placeLabel;
+      machineModel = template.machineModel;
+      poNumber = template.poNumber;
+      taxMode = template.taxMode;
+    }
+  }
+
   try {
     await prisma.$transaction([
       prisma.invoiceItem.deleteMany({ where: { invoiceId: id } }),
@@ -117,9 +193,18 @@ export async function updateInvoice(id: string, formData: FormData) {
           invoiceNumber: input.invoiceNumber,
           invoiceDate: input.invoiceDate,
           customerId: input.customerId,
+          sourceTemplateId,
+          billToName,
+          billToAddress,
+          billToGstin,
+          billToState,
+          billToStateCode,
+          placeLabel,
+          machineModel,
+          poNumber,
+          taxMode,
           notes: input.notes,
           status: input.status,
-          taxMode: "CGST_SGST",
           subtotal: totals.subtotal,
           cgstRate: totals.cgstRate,
           sgstRate: totals.sgstRate,
