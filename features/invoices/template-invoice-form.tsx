@@ -66,11 +66,7 @@ export function TemplateInvoiceForm({
   const [extraCopyEnabled, setExtraCopyEnabled] = useState(false);
   const selectedTemplate = templates.find((template) => template.id === templateId) ?? templates[0];
   const selectedCustomer = customers.find((customer) => customer.id === customerId);
-  const isNbsTemplate = selectedTemplate?.code === "NBS-CONSOLIDATED";
-  const selectedTemplateBranchIds = new Set(selectedTemplate?.items.map((item) => item.branchId).filter(Boolean));
-  const extraCopyBranches = isNbsTemplate
-    ? selectedCustomer?.branches.filter((branch) => selectedTemplateBranchIds.has(branch.id)) ?? []
-    : selectedCustomer?.branches ?? [];
+  const extraCopyBranches = selectedCustomer?.branches ?? [];
   const today = new Date().toISOString().slice(0, 10);
   const billingMonth = new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric" }).format(new Date());
 
@@ -154,7 +150,7 @@ export function TemplateInvoiceForm({
             </div>
           </Card>
 
-          {isNbsTemplate ? (
+          {extraCopyBranches.length > 0 ? (
             <Card className="p-4">
               <div className="grid gap-4 md:grid-cols-[220px_1fr_160px_160px]">
                 <label className="flex items-center gap-2 text-sm font-medium">

@@ -248,13 +248,13 @@ export async function generateInvoiceFromTemplate(formData: FormData) {
   });
 
   const extraCopyEnabled = formData.get("extraCopyEnabled") === "on";
-  if (extraCopyEnabled && template.code === "NBS-CONSOLIDATED") {
+  if (extraCopyEnabled) {
     const extraCopyBranchId = String(formData.get("extraCopyBranchId") ?? "");
     const extraCopyQty = Number(formData.get("extraCopyQty") ?? 0);
     const extraCopyRate = Number(formData.get("extraCopyRate") ?? 0);
 
     if (!extraCopyBranchId || !Number.isFinite(extraCopyQty) || extraCopyQty <= 0 || !Number.isFinite(extraCopyRate) || extraCopyRate < 0) {
-      redirect("/invoices/new?error=Please select branch, quantity and rate for NBS extra copy");
+      redirect("/invoices/new?error=Please select branch, quantity and rate for extra copy");
     }
 
     const extraCopyBranch = await prisma.customerBranch.findFirst({
@@ -269,7 +269,7 @@ export async function generateInvoiceFromTemplate(formData: FormData) {
       srNo: 0,
       branchId: extraCopyBranch.id,
       itemType: "EXTRA_COPY" as const,
-      particulars: `${template.billToName}, ${extraCopyBranch.address}\nExtra copy\nFor the month of ${billingMonth}`,
+      particulars: `Extra Copy\nFor the month of ${billingMonth}`,
       sacCode: "997314",
       uom: "Nos",
       startCount: undefined,
