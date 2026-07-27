@@ -298,7 +298,7 @@ async function main() {
     billToStateCode: "27",
     placeLabel: "Taloja",
     taxMode: TaxMode.CGST_SGST,
-    items: [fixedRental(chRentalText, 7000, chTaloja.id)]
+    items: [fixedRental(chRentalText, 8500, chTaloja.id)]
   });
   await upsertTemplate({
     code: "CH-PUNE-2725",
@@ -371,7 +371,7 @@ async function main() {
 
   await upsertTemplate({
     code: "CH-MH-CONSOLIDATED",
-    name: "CH Robinson - Andheri, Pune & Taloja Consolidated",
+    name: "CH Robinson - Andheri & Pune Consolidated",
     customerId: ch.id,
     branchId: chAndheri.id,
     billToName: ch.companyName,
@@ -379,14 +379,13 @@ async function main() {
     billToGstin: "27AACCC9617L1ZA",
     billToState: "Maharashtra",
     billToStateCode: "27",
-    placeLabel: "Andheri / Pune / Taloja",
+    placeLabel: "Andheri / Pune",
     taxMode: TaxMode.CGST_SGST,
     items: [
       fixedRental(`Andheri - Model 2525\n${chRentalText}`, 7000, chAndheri.id, 1),
       fixedRental(`Andheri - Model 2725\n${chRentalText}`, 6000, chAndheri.id, 2),
-      fixedRental(`Taloja\n${chRentalText}`, 7000, chTaloja.id, 3),
       {
-        srNo: 4,
+        srNo: 3,
         branchId: chPune.id,
         itemType: TemplateItemType.FIXED,
         particulars: "Pune - Canon IR 2725 Printer\nCanon Print Count 18%",
@@ -398,7 +397,7 @@ async function main() {
   });
 
   await prisma.invoiceTemplate.updateMany({
-    where: { code: { in: ["CH-ANDHERI-2525", "CH-ANDHERI-2725", "CH-TALOJA", "CH-PUNE-2725"] } },
+    where: { code: { in: ["CH-ANDHERI-2525", "CH-ANDHERI-2725", "CH-PUNE-2725"] } },
     data: { isActive: false }
   });
 
