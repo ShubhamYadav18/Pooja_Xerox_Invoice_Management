@@ -376,6 +376,36 @@ export async function generateInvoiceFromTemplate(formData: FormData) {
     generatedItems = generatedItems.map((item, index) => ({ ...item, srNo: index + 1 }));
   }
 
+  // --- Extra Products (ad-hoc items like toner, cartridge, etc.) ---
+  const extraProductCount = Number(formData.get("extraProductCount") ?? 0);
+  for (let i = 0; i < extraProductCount; i++) {
+    const name = String(formData.get(`extraProductName:${i}`) ?? "").trim();
+    const qty = Number(formData.get(`extraProductQty:${i}`) ?? 0);
+    const rate = Number(formData.get(`extraProductRate:${i}`) ?? 0);
+
+    if (!name || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(rate) || rate < 0) {
+      continue;
+    }
+
+    generatedItems.push({
+      srNo: generatedItems.length + 1,
+      branchId: undefined,
+      itemType: "FIXED" as const,
+      particulars: `${name}\nFor the month of ${billingMonth}`,
+      sacCode: "997314",
+      uom: "Nos",
+      startCount: undefined,
+      endCount: undefined,
+      freeQty: null,
+      qty,
+      rate,
+      amount: qty * rate
+    });
+  }
+
+  // Re-number all items after extra products
+  generatedItems = generatedItems.map((item, index) => ({ ...item, srNo: index + 1 }));
+
   const taxableItems = generatedItems.filter((item) => item.itemType !== "TEXT");
   const totals = calculateInvoiceTotals(
     taxableItems,

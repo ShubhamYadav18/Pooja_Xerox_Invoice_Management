@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { Button, Card, Field, Input, Select } from "@/components/ui";
 import { formatCurrency } from "@/lib/utils";
@@ -64,6 +64,7 @@ export function TemplateInvoiceForm({
   const templates = useMemo(() => customers.find((customer) => customer.id === customerId)?.templates ?? [], [customerId, customers]);
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
   const [extraCopyEnabled, setExtraCopyEnabled] = useState(false);
+  const [extraProducts, setExtraProducts] = useState<{ name: string; qty: string; rate: string }[]>([]);
   const selectedTemplate = templates.find((template) => template.id === templateId) ?? templates[0];
   const selectedCustomer = customers.find((customer) => customer.id === customerId);
   const extraCopyBranches = selectedCustomer?.branches ?? [];
@@ -75,6 +76,19 @@ export function TemplateInvoiceForm({
     const nextTemplates = customers.find((customer) => customer.id === nextCustomerId)?.templates ?? [];
     setTemplateId(nextTemplates[0]?.id ?? "");
     setExtraCopyEnabled(false);
+    setExtraProducts([]);
+  }
+
+  function addExtraProduct() {
+    setExtraProducts((prev) => [...prev, { name: "", qty: "1", rate: "0" }]);
+  }
+
+  function removeExtraProduct(index: number) {
+    setExtraProducts((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateExtraProduct(index: number, field: string, value: string) {
+    setExtraProducts((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
   }
 
   return (
@@ -182,6 +196,72 @@ export function TemplateInvoiceForm({
               </div>
             </Card>
           ) : null}
+
+          {/* Extra Products Section */}
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-medium">Extra Products</h3>
+                <p className="text-xs text-muted-foreground">Add toner, cartridge, or any other ad-hoc product to this invoice.</p>
+              </div>
+              <button
+                type="button"
+                onClick={addExtraProduct}
+                className="inline-flex h-9 items-center gap-1 rounded-md border bg-card px-3 text-sm font-medium hover:bg-muted"
+              >
+                + Add Product
+              </button>
+            </div>
+            {extraProducts.length > 0 ? (
+              <div className="grid gap-3">
+                {extraProducts.map((product, index) => (
+                  <div key={index} className="grid gap-3 md:grid-cols-[1fr_120px_120px_auto] items-end border rounded-md p-3 bg-muted/30">
+                    <Field label="Product Name">
+                      <Input
+                        name={`extraProductName:${index}`}
+                        value={product.name}
+                        onChange={(e) => updateExtraProduct(index, "name", e.target.value)}
+                        placeholder="e.g. Toner Cartridge"
+                        required
+                      />
+                    </Field>
+                    <Field label="Qty">
+                      <Input
+                        name={`extraProductQty:${index}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={product.qty}
+                        onChange={(e) => updateExtraProduct(index, "qty", e.target.value)}
+                        required
+                      />
+                    </Field>
+                    <Field label="Rate">
+                      <Input
+                        name={`extraProductRate:${index}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={product.rate}
+                        onChange={(e) => updateExtraProduct(index, "rate", e.target.value)}
+                        required
+                      />
+                    </Field>
+                    <button
+                      type="button"
+                      onClick={() => removeExtraProduct(index)}
+                      className="inline-flex h-10 items-center justify-center rounded-md border bg-card px-3 text-sm text-destructive hover:bg-destructive/10"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No extra products added.</p>
+            )}
+            <input type="hidden" name="extraProductCount" value={extraProducts.length} />
+          </Card>
 
           <Card className="overflow-hidden">
             <div className="border-b p-4">

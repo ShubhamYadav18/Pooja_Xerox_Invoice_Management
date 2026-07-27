@@ -53,3 +53,34 @@ export const settingsSchema = z.object({
   footerText: z.string().optional(),
   invoiceHeaderText: z.string().min(2)
 });
+
+export const templateSchema = z.object({
+  name: z.string().min(2, "Template name is required"),
+  billToName: z.string().min(2, "Bill-to name is required"),
+  billToAddress: z.string().min(5, "Bill-to address is required"),
+  billToGstin: z.string().optional(),
+  billToState: z.string().min(2, "State is required"),
+  billToStateCode: z.string().min(1, "State code is required"),
+  placeLabel: z.string().optional(),
+  machineModel: z.string().optional(),
+  poNumber: z.string().optional(),
+  taxMode: z.enum(["CGST_SGST", "IGST"]).default("CGST_SGST"),
+  cgstRate: z.coerce.number().min(0).max(100).default(9),
+  sgstRate: z.coerce.number().min(0).max(100).default(9),
+  igstRate: z.coerce.number().min(0).max(100).default(18),
+  isActive: z.coerce.boolean().default(true)
+});
+
+export const templateItemSchema = z.object({
+  templateId: z.string().min(1),
+  branchId: z.string().optional(),
+  itemType: z.enum(["FIXED", "METER", "EXTRA_COPY", "TEXT"]).default("FIXED"),
+  particulars: z.string().min(1, "Particulars are required"),
+  sacCode: z.string().default("997314"),
+  uom: z.string().default(""),
+  qty: z.coerce.number().nonnegative().default(1),
+  rate: z.coerce.number().nonnegative().default(0),
+  amount: z.coerce.number().nonnegative().default(0),
+  freeQty: z.coerce.number().nonnegative().optional()
+});
+

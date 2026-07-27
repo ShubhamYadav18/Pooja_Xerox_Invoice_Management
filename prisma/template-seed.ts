@@ -428,7 +428,7 @@ async function main() {
     billToState: "Maharashtra",
     billToStateCode: "27",
     machineModel: "Canon Color Machine C3326",
-    poNumber: "805695 - 00084",
+    poNumber: "827088",
     taxMode: TaxMode.CGST_SGST,
     items: [
       fixedRental("Color Machine C3326\nFixed Monthly Rental Charges", 5000, elementisTaloja.id),
