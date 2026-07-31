@@ -24,7 +24,7 @@ export const invoiceItemSchema = z.object({
   particulars: z.string().min(2),
   sacCode: z.string().min(1),
   uom: z.string().min(1),
-  qty: z.coerce.number().positive(),
+  qty: z.coerce.number().nonnegative(),
   rate: z.coerce.number().nonnegative()
 });
 
