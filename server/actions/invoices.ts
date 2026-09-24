@@ -367,13 +367,17 @@ export async function generateInvoiceFromTemplate(formData: FormData) {
 
     const branchRowIndex = generatedItems.findIndex((item) => item.branchId === extraCopyBranch.id);
     const insertIndex = branchRowIndex >= 0 ? branchRowIndex + 1 : generatedItems.length;
+    const hasDuplicateSrNo = new Set(template.items.map((i) => i.srNo)).size < template.items.length;
     generatedItems = [
       ...generatedItems.slice(0, insertIndex),
       extraCopyItem,
       ...generatedItems.slice(insertIndex)
-    ].map((item, index) => ({ ...item, srNo: index + 1 }));
+    ].map((item, index) => ({ ...item, srNo: hasDuplicateSrNo && item.srNo ? item.srNo : index + 1 }));
   } else {
-    generatedItems = generatedItems.map((item, index) => ({ ...item, srNo: index + 1 }));
+    const hasDuplicateSrNo = new Set(template.items.map((i) => i.srNo)).size < template.items.length;
+    if (!hasDuplicateSrNo) {
+      generatedItems = generatedItems.map((item, index) => ({ ...item, srNo: index + 1 }));
+    }
   }
 
   // --- Extra Products (ad-hoc items like toner, cartridge, etc.) ---
@@ -403,8 +407,11 @@ export async function generateInvoiceFromTemplate(formData: FormData) {
     });
   }
 
-  // Re-number all items after extra products
-  generatedItems = generatedItems.map((item, index) => ({ ...item, srNo: index + 1 }));
+  // Re-number items if extra products were added or if not using custom template serial numbers
+  const hasDuplicateSrNo = new Set(template.items.map((i) => i.srNo)).size < template.items.length;
+  if (!hasDuplicateSrNo && extraProductCount > 0) {
+    generatedItems = generatedItems.map((item, index) => ({ ...item, srNo: index + 1 }));
+  }
 
   const taxableItems = generatedItems.filter((item) => item.itemType !== "TEXT");
   const totals = calculateInvoiceTotals(
