@@ -1,6 +1,7 @@
 import { updateSettings } from "@/server/actions/settings";
 import { Card, Field, Input, Textarea, Button } from "@/components/ui";
 import { getActiveProfileId, getActiveSettings } from "@/server/profile";
+import { ReminderEmailToggle } from "@/components/reminder-email-toggle";
 
 export default async function SettingsPage() {
   const profileId = await getActiveProfileId();
@@ -12,6 +13,9 @@ export default async function SettingsPage() {
         <h1 className="text-2xl font-semibold">Settings</h1>
         <p className="text-sm text-muted-foreground">All invoice branding and tax defaults are managed here.</p>
       </div>
+
+      <ReminderEmailToggle initialEnabled={settings?.reminderEmailsEnabled ?? true} />
+
       <Card className="p-4">
         <form action={updateSettings.bind(null, profileId)} className="grid gap-4 md:grid-cols-2">
           <Field label="Business Name">

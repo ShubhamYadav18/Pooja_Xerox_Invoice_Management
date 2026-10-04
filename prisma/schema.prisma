@@ -175,6 +175,8 @@ model Invoice {
   paidAt         DateTime?
   paymentMode    String?
   paymentReference String?
+  lastReminderSentAt DateTime?
+  reminderCount  Int           @default(0)
   items          InvoiceItem[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -287,6 +289,7 @@ model BusinessSettings {
   bankAccountNo     String?
   bankBranch        String?
   bankIfsc          String?
+  reminderEmailsEnabled Boolean @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
@@ -302,8 +305,50 @@ model BusinessProfile {
   customers          Customer[]
   templates          InvoiceTemplate[]
   invoices           Invoice[]
+  suppliers          Supplier[]
+  purchases          Purchase[]
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+}
+
+model Supplier {
+  id        String          @id @default(cuid())
+  profileId String
+  profile   BusinessProfile @relation(fields: [profileId], references: [id], onDelete: Restrict)
+  name      String
+  gstin     String?
+  state     String          @default("Maharashtra")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([profileId, name])
+  @@index([profileId])
+}
+
+model Purchase {
+  id            String          @id @default(cuid())
+  profileId     String
+  profile       BusinessProfile @relation(fields: [profileId], references: [id], onDelete: Restrict)
+  billNumber    String
+  billDate      DateTime
+  supplierName  String
+  supplierGstin String?
+  stateOfSupply String          @default("Maharashtra")
+  taxMode       TaxMode        @default(CGST_SGST)
+  taxableAmount Decimal         @db.Decimal(12, 2)
+  cgstRate      Decimal         @default(9) @db.Decimal(5, 2)
+  sgstRate      Decimal         @default(9) @db.Decimal(5, 2)
+  igstRate      Decimal         @default(18) @db.Decimal(5, 2)
+  cgstAmount    Decimal         @default(0) @db.Decimal(12, 2)
+  sgstAmount    Decimal         @default(0) @db.Decimal(12, 2)
+  igstAmount    Decimal         @default(0) @db.Decimal(12, 2)
+  totalAmount   Decimal         @db.Decimal(12, 2)
+  notes         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([profileId, supplierName, billNumber])
+  @@index([profileId, billDate])
 }
 
 model InvoiceDraft {

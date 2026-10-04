@@ -38,7 +38,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </form>
         </div>
       </div>
-      <PdfActions invoiceNumber={invoice.invoiceNumber} />
+      <PdfActions
+        invoiceId={invoice.id}
+        invoiceNumber={invoice.invoiceNumber}
+        customerName={invoice.customer.companyName}
+        customerEmail={invoice.customer.email}
+        grandTotal={Number(invoice.grandTotal)}
+        businessName={settings.businessName}
+        businessEmail={settings.email ?? undefined}
+      />
       <div id="invoice-preview" className="invoice-preview-mobile">
         <InvoiceTemplate invoice={invoice} settings={settings} />
       </div>

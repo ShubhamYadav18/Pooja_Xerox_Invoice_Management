@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card, Input, LinkButton, Select } from "@/components/ui";
+import { BulkDownloadZipModal } from "@/features/invoices/bulk-download-zip-modal";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { getActiveProfileId } from "@/server/profile";
@@ -68,7 +69,10 @@ export default async function InvoicesPage({
           <h1 className="text-2xl font-semibold">Invoices</h1>
           <p className="text-sm text-muted-foreground">View, edit, print, download and duplicate invoices.</p>
         </div>
-        <LinkButton href="/invoices/new" className="w-full sm:w-auto">New Invoice</LinkButton>
+        <div className="flex flex-wrap items-center gap-2">
+          <BulkDownloadZipModal />
+          <LinkButton href="/invoices/new" className="w-full sm:w-auto">New Invoice</LinkButton>
+        </div>
       </div>
       <Card className="overflow-hidden">
         <div className="border-b p-4">

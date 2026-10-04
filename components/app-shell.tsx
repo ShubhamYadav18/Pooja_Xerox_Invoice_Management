@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BarChart3, Building2, CreditCard, LayoutDashboard, LogOut, ReceiptText, Settings } from "lucide-react";
+import { BarChart3, Building2, CreditCard, LayoutDashboard, LogOut, ReceiptText, Settings, ShoppingCart } from "lucide-react";
 import { auth, signOut } from "@/auth";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,6 +12,7 @@ const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/customers", label: "Customers", icon: Building2 },
   { href: "/invoices", label: "Invoices", icon: ReceiptText },
+  { href: "/purchases", label: "Purchases", icon: ShoppingCart },
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings }

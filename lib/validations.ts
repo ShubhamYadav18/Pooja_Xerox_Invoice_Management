@@ -38,6 +38,17 @@ export const invoiceSchema = z.object({
   items: z.array(invoiceItemSchema).min(1, "At least one item is required")
 });
 
+export const purchaseSchema = z.object({
+  billNumber: z.string().trim().min(1, "Bill number is required").max(100),
+  billDate: z.coerce.date(),
+  supplierName: z.string().trim().min(2, "Supplier name is required").max(160),
+  supplierGstin: z.string().trim().max(30).optional(),
+  stateOfSupply: z.string().trim().min(2, "State is required").max(80),
+  taxableAmount: z.coerce.number().nonnegative("Taxable value cannot be negative"),
+  notes: z.string().trim().max(1000).optional(),
+  saveSupplier: z.boolean().default(false)
+});
+
 export const settingsSchema = z.object({
   businessName: z.string().min(2),
   businessAddress: z.string().min(5),
@@ -83,4 +94,3 @@ export const templateItemSchema = z.object({
   amount: z.coerce.number().nonnegative().default(0),
   freeQty: z.coerce.number().nonnegative().optional()
 });
-

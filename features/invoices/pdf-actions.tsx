@@ -2,8 +2,27 @@
 
 import { Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui";
+import { EmailInvoiceModal } from "@/features/invoices/email-invoice-modal";
 
-export function PdfActions({ invoiceNumber }: { invoiceNumber: string }) {
+interface PdfActionsProps {
+  invoiceNumber: string;
+  invoiceId?: string;
+  customerName?: string;
+  customerEmail?: string | null;
+  grandTotal?: number;
+  businessName?: string;
+  businessEmail?: string;
+}
+
+export function PdfActions({
+  invoiceNumber,
+  invoiceId,
+  customerName,
+  customerEmail,
+  grandTotal,
+  businessName,
+  businessEmail
+}: PdfActionsProps) {
   async function downloadPdf() {
     const html2canvas = (await import("html2canvas")).default;
     const { jsPDF } = await import("jspdf");
@@ -30,7 +49,18 @@ export function PdfActions({ invoiceNumber }: { invoiceNumber: string }) {
   }
 
   return (
-    <div className="no-print mb-4 grid gap-2 sm:flex sm:justify-end">
+    <div className="no-print mb-4 grid gap-2 sm:flex sm:items-center sm:justify-end">
+      {invoiceId && customerName && (
+        <EmailInvoiceModal
+          invoiceId={invoiceId}
+          invoiceNumber={invoiceNumber}
+          customerName={customerName}
+          customerEmail={customerEmail}
+          grandTotal={grandTotal ?? 0}
+          businessName={businessName}
+          businessEmail={businessEmail}
+        />
+      )}
       <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={() => window.print()}>
         <Printer className="h-4 w-4" />
         Print

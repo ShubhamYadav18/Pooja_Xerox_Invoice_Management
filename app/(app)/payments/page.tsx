@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Button, Card, Input, Select } from "@/components/ui";
+import { WhatsAppReminderModal } from "@/features/invoices/whatsapp-reminder-modal";
+import { PaymentReminderButton } from "@/features/invoices/payment-reminder-button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { confirmInvoicePayment, markInvoiceUnpaid } from "@/server/actions/payments";
@@ -44,9 +46,15 @@ export default async function PaymentsPage({
 
   return (
     <div className="grid gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Payments</h1>
-        <p className="text-sm text-muted-foreground">Confirm whether payment has been received for each invoice.</p>
+      <div className="grid gap-3 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Payments</h1>
+          <p className="text-sm text-muted-foreground">Confirm whether payment has been received for each invoice.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <PaymentReminderButton />
+          <WhatsAppReminderModal />
+        </div>
       </div>
 
       <section className="grid gap-4 md:grid-cols-3">
@@ -85,6 +93,7 @@ export default async function PaymentsPage({
                 <th className="p-3">Customer</th>
                 <th className="p-3 text-right">Amount</th>
                 <th className="p-3">Payment</th>
+                <th className="p-3">Reminders</th>
                 <th className="p-3">Confirm</th>
               </tr>
             </thead>
@@ -112,6 +121,26 @@ export default async function PaymentsPage({
                     )}
                   </td>
                   <td className="p-3">
+                    {invoice.paymentStatus === "UNPAID" ? (
+                      <div className="grid gap-0.5">
+                        <span className={`text-xs font-medium ${
+                          invoice.reminderCount === 0 ? "text-muted-foreground" :
+                          invoice.reminderCount === 1 ? "text-blue-600" :
+                          invoice.reminderCount === 2 ? "text-amber-600" : "text-destructive"
+                        }`}>
+                          {invoice.reminderCount === 0 ? "None sent" : `${invoice.reminderCount} sent`}
+                        </span>
+                        {invoice.lastReminderSentAt && (
+                          <span className="text-xs text-muted-foreground">
+                            Last: {formatDate(invoice.lastReminderSentAt)}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="p-3">
                     {invoice.paymentStatus === "PAID" ? (
                       <form action={markInvoiceUnpaid.bind(null, invoice.id)}>
                         <Button variant="secondary" className="h-9">Mark Unpaid</Button>
@@ -135,7 +164,7 @@ export default async function PaymentsPage({
               ))}
               {invoices.length === 0 ? (
                 <tr>
-                  <td className="p-6 text-center text-muted-foreground" colSpan={6}>
+                  <td className="p-6 text-center text-muted-foreground" colSpan={7}>
                     No invoices found.
                   </td>
                 </tr>
