@@ -34,7 +34,7 @@ export function InvoiceTemplate({
                 <h1 className="mt-1 text-[36px] font-black text-red-600 leading-none tracking-normal">{settings.businessName}</h1>
                 <p className="mx-auto mt-2 max-w-[160mm] text-balance text-[10px] leading-4">{settings.businessAddress}</p>
                 <p className="text-[10px] leading-4">Email: {settings.email || "-"} | Contact: {settings.contactNumber || "-"}</p>
-                <p className="text-[10px] leading-4">GSTIN: {settings.gstNumber}</p>
+                {settings.gstNumber ? <p className="text-[10px] leading-4">GSTIN: {settings.gstNumber}</p> : null}
               </div>
               <div className="flex justify-center">
                 <img src="/images.png" alt="Ganesh Logo" className="h-[20mm] w-[20mm] object-contain mix-blend-multiply" />

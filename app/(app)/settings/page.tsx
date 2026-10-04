@@ -21,8 +21,8 @@ export default async function SettingsPage() {
           <Field label="Business Name">
             <Input name="businessName" defaultValue={settings?.businessName ?? "POOJA ENTERPRISES"} required />
           </Field>
-          <Field label="GST Number">
-            <Input name="gstNumber" defaultValue={settings?.gstNumber ?? ""} required />
+          <Field label="GST Number (Optional)">
+            <Input name="gstNumber" defaultValue={settings?.gstNumber ?? ""} placeholder="Optional (e.g. for Pooja Xerox)" />
           </Field>
           <Field label="Email">
             <Input name="email" type="email" defaultValue={settings?.email ?? ""} />

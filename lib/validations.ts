@@ -52,7 +52,7 @@ export const purchaseSchema = z.object({
 export const settingsSchema = z.object({
   businessName: z.string().min(2),
   businessAddress: z.string().min(5),
-  gstNumber: z.string().min(2),
+  gstNumber: z.string().optional().default(""),
   email: z.string().email().optional().or(z.literal("")),
   contactNumber: z.string().optional(),
   logoUrl: z.string().optional(),
